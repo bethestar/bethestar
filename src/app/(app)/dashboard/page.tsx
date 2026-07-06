@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DdayBadge } from "@/components/ui/dday-badge";
 import { TaskStatusBadge } from "@/components/ui/status-badge";
-import { formatKRW, formatDate, timeAgo, NOTIFICATION_TYPE_LABEL } from "@/lib/utils";
+import { formatKRW, formatDate, timeAgo } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
