@@ -42,7 +42,7 @@ export function normalizeBizinfo(row) {
     target: cleanText(pick(row, "trgetNm", "trgetCn"), 200),
     region: "",
     hashtags: pick(row, "hashtags", "hashTags"),
-    applyPeriodText: periodText,
+    applyPeriodText: start && end ? `${start} ~ ${end}` : periodText,
     applyStart: start,
     applyEnd: end,
     registeredAt: toIsoDate(pick(row, "creatPnttm", "pubDate", "registDt")),

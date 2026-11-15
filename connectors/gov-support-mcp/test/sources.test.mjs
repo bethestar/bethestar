@@ -103,6 +103,7 @@ test("bizinfo: 정규화·키워드·마감 필터·상대 URL 보정", async ()
   assert.equal(i.applyStart, "2099-11-01");
   assert.equal(i.applyEnd, "2099-11-30");
   assert.equal(i.status, "upcoming");
+  assert.equal(i.applyPeriodText, "2099-11-01 ~ 2099-11-30");
   assert.ok(i.url.startsWith("https://www.bizinfo.go.kr/web/"));
   assert.match(calls[0], /crtfcKey=BIZKEY123/);
   assert.match(calls[0], /dataType=json/);

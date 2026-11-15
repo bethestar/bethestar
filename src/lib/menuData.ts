@@ -268,4 +268,5 @@ export const mainMenuItems: MenuItem[] = [
   { id: "calculator", label: "계산기", href: "/calculator" },
   { id: "forms", label: "양식", href: "/forms" },
   { id: "community", label: "커뮤니티", href: "/community" },
+  { id: "support", label: "지원사업", href: "/support" },
 ];

@@ -189,6 +189,32 @@ function AccountingMegaMenu() {
   );
 }
 
+function SupportMegaMenu() {
+  const links = [
+    { href: "/support", label: "전체 지원사업", desc: "기업마당·K-Startup·보조금24 통합 검색" },
+    { href: "/support?source=kstartup&target=예비창업자", label: "창업지원", desc: "예비·초기 창업자 대상 공고" },
+    { href: "/support?source=bizinfo", label: "중소기업·소상공인", desc: "기업마당 지원사업 공고" },
+    { href: "/support?source=gov24", label: "보조금·혜택", desc: "보조금24 공공서비스" },
+  ];
+  return (
+    <div className="absolute right-0 top-full bg-white shadow-xl border-t border-gray-200 z-50 rounded-b-lg min-w-[320px]">
+      <div className="p-6">
+        <h3 className="text-sm font-bold text-gray-900 mb-4">정부지원사업</h3>
+        <ul className="space-y-2">
+          {links.map((l) => (
+            <li key={l.href}>
+              <Link href={l.href} className="block p-2.5 rounded-lg hover:bg-gray-50 transition-colors group">
+                <span className="block text-sm font-medium text-gray-700 group-hover:text-blue-700">{l.label}</span>
+                <span className="block text-xs text-gray-400">{l.desc}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 function MobileMenu({
   isOpen,
   onClose,
@@ -357,6 +383,25 @@ function MobileMenu({
                 </div>
               )}
 
+              {expandedMenu === "support" && item.id === "support" && (
+                <div className="pl-4 pb-2">
+                  <Link
+                    href="/support"
+                    onClick={onClose}
+                    className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600"
+                  >
+                    전체 지원사업
+                  </Link>
+                  <Link
+                    href="/support?source=kstartup&target=예비창업자"
+                    onClick={onClose}
+                    className="block px-4 py-2 text-sm text-gray-600 hover:text-blue-600"
+                  >
+                    창업지원
+                  </Link>
+                </div>
+              )}
+
               {expandedMenu === "accounting" && item.id === "accounting" && (
                 <div className="pl-4 pb-2">
                   <p className="px-4 py-2 text-sm text-gray-400">준비 중</p>
@@ -411,6 +456,8 @@ export default function Navbar() {
         return <FormsMegaMenu />;
       case "community":
         return <CommunityMegaMenu />;
+      case "support":
+        return <SupportMegaMenu />;
       default:
         return null;
     }

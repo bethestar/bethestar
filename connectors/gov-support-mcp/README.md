@@ -70,7 +70,15 @@ node src/cli.mjs kstartup --target 예비창업자 --limit 5
 node src/cli.mjs gov24-detail 000000465790
 ```
 
-## 6. 스킬
+## 6. 택스허브 사이트 (`/support`)
+
+`src/lib/govSupport.ts`가 이 커넥터 코드를 그대로 가져다 쓰고, `src/app/support/page.tsx`가 화면을 그려요.
+
+- API 키는 서버에서만 읽어요. 레포 루트 `.env.local`이나 배포 환경변수에 `DATA_GO_KR_API_KEY`, `BIZINFO_API_KEY`를 넣으면 돼요.
+- 키가 없는 출처는 "키 미설정"으로 표시돼요. 키가 하나도 없으면 각 포털 링크를 대신 보여 줘요.
+- 같은 요청의 API 응답은 Next.js 데이터 캐시에 1시간 동안 보관돼요.
+
+## 7. 스킬
 
 `.claude/skills/gov-support-search/SKILL.md`는 이 커넥터로 조건 확인 → 조회 → 정리 → 공식 공고 확인 안내 순서로 답하도록 Claude에게 알려 주는 스킬이에요.
 
