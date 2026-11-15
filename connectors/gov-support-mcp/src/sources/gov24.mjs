@@ -5,7 +5,7 @@
 // ⚠️ cond[필드::LIKE] 서버 필터는 odcloud 계열 API 의 일반 규칙을 따른 것으로, 이 API 에서 모든 필드에
 //    동작하는지는 직접 검증하지 못했다. 결과는 클라이언트에서 한 번 더 거른다.
 
-import { buildUrl, encodeServiceKey, getJson, MissingKeyError, SourceError } from "../http.mjs";
+import { AuthError, buildUrl, encodeServiceKey, getJson, MissingKeyError, SourceError } from "../http.mjs";
 import { clamp, cleanText, matchesKeyword, pick, toIsoDate } from "../normalize.mjs";
 
 export const SOURCE = "gov24";
@@ -52,7 +52,9 @@ function getKey(env) {
 
 function rowsOf(payload) {
   if (payload?.code && Number(payload.code) < 0) {
-    throw new SourceError(SOURCE, `API 오류 ${payload.code}: ${payload.msg ?? ""}`);
+    // -4: 등록되지 않은 인증키 (데이터셋 15113968 활용신청 필요, 실호출 확인)
+    const Err = [-4, -401].includes(Number(payload.code)) ? AuthError : SourceError;
+    throw new Err(SOURCE, `API 오류 ${payload.code}: ${payload.msg ?? ""}`);
   }
   if (!Array.isArray(payload?.data)) {
     throw new SourceError(SOURCE, `예상과 다른 응답 형식 (응답 키: ${Object.keys(payload ?? {}).slice(0, 8).join(", ")})`);

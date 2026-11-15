@@ -29,6 +29,7 @@ export function normalizeKstartup(row) {
     applyStart: toIsoDate(pick(row, "pbanc_rcpt_bgng_dt")),
     applyEnd: toIsoDate(pick(row, "pbanc_rcpt_end_dt")),
     registeredAt: "",
+    contact: pick(row, "prch_cnpl_no"),
     recruiting: pick(row, "rcrt_prgs_yn") || undefined,
     url: pick(row, "detl_pg_url", "biz_gdnc_url", "aply_mthd_onli_rcpt_istc"),
   };

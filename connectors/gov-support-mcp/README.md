@@ -13,6 +13,7 @@
 1. **공공데이터포털 키 (`DATA_GO_KR_API_KEY`)**: [data.go.kr](https://www.data.go.kr)에 가입한 뒤 아래 두 데이터셋에 **활용신청**을 해요. 키 하나로 둘 다 쓸 수 있어요.
    - [창업진흥원_K-Startup 조회서비스 (15125364)](https://www.data.go.kr/data/15125364/openapi.do)
    - [행정안전부_대한민국 공공서비스(혜택) 정보 (15113968)](https://www.data.go.kr/data/15113968/openapi.do) (자동승인)
+   - 데이터셋마다 **따로** 활용신청해야 해요. 키는 같아도 신청하지 않은 데이터셋은 "등록되지 않은 인증키 입니다"(보조금24) 같은 오류가 나요. 승인 직후에는 반영까지 시간이 걸릴 수 있어요.
    - 마이페이지에서 "일반 인증키(Decoding)"를 복사해요. Encoding 키를 넣어도 자동으로 처리돼요.
 2. **기업마당 키 (`BIZINFO_API_KEY`)**: 공공데이터포털 키와는 다른 별도의 키(crtfcKey)예요.
    - 기업마당에 회원가입하고 로그인한 뒤 **활용정보 → 정책정보 개방**에서 [지원사업정보 API](https://www.bizinfo.go.kr/apiDetail.do?id=bizinfoApi)의 **사용신청**을 눌러요. ([API 목록](https://www.bizinfo.go.kr/apiList.do))
@@ -26,8 +27,21 @@
 ```bash
 cd connectors/gov-support-mcp
 npm install
-npm test          # 가짜 응답으로 하는 단위 테스트 18개 (네트워크 불필요)
+npm test          # 가짜 응답으로 하는 단위 테스트 23개 (네트워크 불필요)
 ```
+
+### Windows (PowerShell)
+
+- `npm install`에서 "스크립트를 실행할 수 없으므로 npm.ps1 파일을 로드할 수 없습니다" 오류가 나면 PowerShell 실행 정책 때문이에요. 둘 중 하나로 해결해요.
+  - `npm` 대신 `npm.cmd install`로 실행해요.
+  - 또는 한 번만 실행해요: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+- 환경변수는 `export` 대신 이렇게 넣어요. 그 PowerShell 창에서만 유지돼요.
+  ```powershell
+  $env:DATA_GO_KR_API_KEY="..."
+  $env:BIZINFO_API_KEY="..."
+  node src/cli.mjs all --text
+  ```
+- 경로 구분자는 `\`를 써요 (`cd connectors\gov-support-mcp`).
 
 ## 3. 연결
 
@@ -87,13 +101,16 @@ node src/cli.mjs gov24-detail 000000465790
 
 ## ⚠️ 검증 상태와 한계
 
-- 이 커넥터는 **실제 API에 호출해서 검증하지 못했어요.** 개발 환경에서 정부 API 서버에 접속할 수 없었기 때문이에요. 단위 테스트는 가짜 응답으로만 돌렸어요. 키를 발급받은 뒤 `node src/cli.mjs all --text`로 먼저 확인해 주세요.
-- 엔드포인트·파라미터·필드명의 근거는 다음과 같아요.
-  - K-Startup·보조금24: 공개된 제3자 구현([NomaDamas/k-skill](https://github.com/NomaDamas/k-skill), [djfksjd/sole-search](https://github.com/djfksjd/sole-search))을 참고했어요.
-  - 기업마당: 공개된 사용 예시를 바탕으로 작성했어요. 공식 명세서와 대조하지 못해서 **특히 불확실해요.**
-  - 필드명이 다르면 여러 후보 키를 순서대로 시도하고, 그래도 없으면 응답 키 목록과 함께 오류를 내요.
-- 기업마당은 `dataType=json`을 요청해도 XML만 온다는 보고가 있어요 (공식 페이지는 JSON 지원이라고 설명함). 그래서 JSON을 먼저 읽고, 아니면 XML(RSS)의 `<item>`을 읽어요. 결과의 `format` 필드(`json`/`xml`)로 실제 형식을 확인할 수 있어요. JSON 목록이 어느 키 아래에 있는지 확인되지 않아서 `jsonArray`·`items`·`data` 등 여러 형태를 허용해요.
+| 소스 | 실제 호출 확인 (2026-11) | 비고 |
+|---|---|---|
+| 기업마당 | ✅ 확인 | JSON 응답, 필드명 일치. 잘못된 키는 HTTP 200 + `reqErr`로 와요. |
+| K-Startup | ✅ 확인 | 필드명 일치. 응답의 `id`는 행 번호라서 공고 ID는 `pbanc_sn`을 써요. |
+| 보조금24 | ⏳ 미확인 | 활용신청 전이라 "등록되지 않은 인증키"(code -4) 응답만 확인했어요. 신청 후 다시 확인이 필요해요. |
+
+- **기업마당은 국내 IP에서 호출해야 해요.** 해외 클라우드에서는 연결이 끊겼어요. 해외 IP 차단으로 보이지만 확실하지 않아요. 사이트를 배포할 때는 서울 리전을 권해요.
+- 엔드포인트·파라미터는 공개된 제3자 구현([NomaDamas/k-skill](https://github.com/NomaDamas/k-skill), [djfksjd/sole-search](https://github.com/djfksjd/sole-search))과 사용 예시를 참고했어요. 필드명이 바뀌면 여러 후보 키를 순서대로 시도하고, 그래도 없으면 응답 키 목록과 함께 오류를 내요.
+- 기업마당은 XML(RSS)만 온다는 보고도 있어서, JSON이 아니면 XML의 `<item>`을 읽도록 대비해 두었어요. 결과의 `format` 필드(`json`/`xml`)로 실제 형식을 확인할 수 있어요.
 - K-Startup의 지역·대상·업력 필터는 서버가 무시하는 사례가 보고되어 있어서 클라이언트에서 한 번 더 걸러요.
-- 보조금24의 `cond[필드::LIKE]` 필터가 모든 필드에서 동작하는지는 확인하지 못했어요.
+- 보조금24의 `cond[필드::LIKE]` 서버 필터는 아직 확인하지 못했어요.
 - 목록 데이터만으로는 지원 자격을 확정할 수 없어요. 반드시 공식 공고문을 확인해야 해요.
 - 각 API의 이용약관과 호출 한도(K-Startup 개발계정은 일 10,000건으로 알려져 있음, 미검증)를 지켜 주세요.

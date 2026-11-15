@@ -1,12 +1,13 @@
 // 기업마당(bizinfo.go.kr) 지원사업정보 API — 중소벤처기업부.
 // 인증키(crtfcKey)는 기업마당 사이트에서 별도 발급 (data.go.kr 키와 다름).
 //
-// ⚠️ 엔드포인트·파라미터·응답 필드명은 공개된 제3자 구현과 기존 사용 예시를 바탕으로 작성했으며
-//    공식 명세서로 직접 검증하지 못했다. 필드명은 여러 후보를 순서대로 시도한다.
-//    dataType=json 을 줘도 XML 이 온다는 보고가 있어 JSON·XML(RSS) 응답을 모두 읽는다.
+// 2026-11 실제 호출로 확인: dataType=json 요청 시 JSON 응답, 필드명(pblancNm·bsnsSumryCn·jrsdInsttNm·
+//    excInsttNm·reqstBeginEndDe·pldirSportRealmLclasCodeNm·trgetNm·hashtags·creatPnttm·pblancId) 일치.
+//    해외 IP 에서는 연결이 끊긴다 (국내 서버에서 호출해야 함, 원인 추정).
+//    XML(RSS) 응답 보고도 있어 JSON·XML 을 모두 읽는다. 필드명은 여러 후보를 순서대로 시도한다.
 //    공식 문서: https://www.bizinfo.go.kr/apiDetail.do?id=bizinfoApi (API 목록: https://www.bizinfo.go.kr/apiList.do)
 
-import { buildUrl, getText, MissingKeyError, SourceError, xmlErrorMessage } from "../http.mjs";
+import { AuthError, buildUrl, getText, MissingKeyError, SourceError, xmlErrorMessage } from "../http.mjs";
 import { looksLikeXml, parseXmlRecords } from "../xml.mjs";
 import { clamp, cleanText, deadlineStatus, matchesKeyword, matchesRegion, pick, splitPeriod, toIsoDate } from "../normalize.mjs";
 
@@ -60,6 +61,10 @@ export function parseBizinfoBody(body) {
       payload = JSON.parse(text);
     } catch {
       throw new SourceError(SOURCE, "JSON 응답을 해석하지 못했습니다.");
+    }
+    // 잘못된 키는 HTTP 200 + {"reqErr": "존재하지 않는 인증키 입니다."} 로 온다 (실호출 확인).
+    if (payload?.reqErr) {
+      throw new AuthError(SOURCE, `인증키 오류: ${payload.reqErr} BIZINFO_API_KEY 를 확인하세요`);
     }
     const rows = extractRows(payload);
     if (!rows) {

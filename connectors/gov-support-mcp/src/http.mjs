@@ -10,6 +10,14 @@ export class SourceError extends Error {
   }
 }
 
+/** 인증키가 잘못됐거나 활용신청이 승인되지 않은 경우. */
+export class AuthError extends SourceError {
+  constructor(source, message, opts) {
+    super(source, `${message} — 인증키가 맞는지, 해당 API 활용신청이 승인됐는지 확인하세요. (승인 직후에는 반영까지 시간이 걸릴 수 있어요)`, opts);
+    this.name = "AuthError";
+  }
+}
+
 export class MissingKeyError extends SourceError {
   constructor(source, envName, howTo) {
     super(source, `API 키가 없습니다. 환경변수 ${envName} 를 설정하세요. (${howTo})`);
@@ -85,7 +93,8 @@ export async function getText(source, url, { secret, timeoutMs = 15000, retries 
         throw new SourceError(source, `예상치 못한 리다이렉트(HTTP ${res.status}) — 요청을 중단했습니다.`, { status: res.status });
       }
       if (res.status === 401 || res.status === 403) {
-        throw new SourceError(source, `인증 거부(HTTP ${res.status}). API 키와 활용신청 승인 상태를 확인하세요.`, { status: res.status });
+        const msg = redact(serverMessage(body), secret);
+        throw new AuthError(source, `인증 거부(HTTP ${res.status})${msg ? `: ${msg}` : ""}`, { status: res.status });
       }
       if (res.status === 429 || res.status >= 500) {
         lastErr = new SourceError(source, `서버 오류(HTTP ${res.status}): ${redact(body.slice(0, 200), secret)}`, { status: res.status });
@@ -132,4 +141,19 @@ export async function getJson(source, url, opts = {}) {
     const msg = xmlErrorMessage(body);
     throw new SourceError(source, `JSON 이 아닌 응답${msg ? `: ${msg}` : ""} — 키 미등록·활용신청 미승인일 수 있습니다.`);
   }
+}
+
+/** JSON 또는 XML 오류 본문에서 사람이 읽을 메시지를 꺼낸다. */
+export function serverMessage(body) {
+  const text = String(body ?? "").trim();
+  if (text.startsWith("{")) {
+    try {
+      const j = JSON.parse(text);
+      const m = j.msg ?? j.message ?? j.reqErr ?? j.errMsg ?? j.resultMsg ?? j.error;
+      if (m) return String(m).slice(0, 200);
+    } catch {
+      /* fall through */
+    }
+  }
+  return xmlErrorMessage(text) || text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 120);
 }
