@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SupportHighlights from "@/components/SupportHighlights";
 import {
   taxLaws,
   calculatorCategories,
@@ -282,6 +283,7 @@ export default function Home() {
     <>
       <HeroSection />
       <TaxLawSection />
+      <SupportHighlights />
       <CalculatorSection />
       <FormsSection />
       <CommunitySection />
