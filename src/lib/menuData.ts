@@ -90,7 +90,7 @@ export const taxLaws: TaxLaw[] = [
   },
   {
     id: "international-tax",
-    label: "국제조세에 관한 법률",
+    label: "국제조세조정에 관한 법률",
     shortLabel: "국조법",
     sections: lawSubSections,
   },
