@@ -3,7 +3,7 @@
 //
 // ⚠️ 엔드포인트·파라미터·응답 필드명은 공개된 제3자 구현과 기존 사용 예시를 바탕으로 작성했으며
 //    공식 명세서로 직접 검증하지 못했다. 필드명은 여러 후보를 순서대로 시도한다.
-//    공식 문서: https://www.bizinfo.go.kr/web/lay1/program/S1T175C174/apiDetail.do
+//    공식 문서: https://www.bizinfo.go.kr/apiDetail.do?id=bizinfoApi (API 목록: https://www.bizinfo.go.kr/apiList.do)
 
 import { buildUrl, getJson, MissingKeyError, SourceError } from "../http.mjs";
 import { clamp, cleanText, deadlineStatus, matchesKeyword, matchesRegion, pick, splitPeriod, toIsoDate } from "../normalize.mjs";
@@ -66,7 +66,7 @@ export function normalizeBizinfo(row) {
  */
 export async function searchBizinfo(opts = {}, env = process.env, fetchImpl) {
   const key = env.BIZINFO_API_KEY?.trim();
-  if (!key) throw new MissingKeyError(SOURCE, "BIZINFO_API_KEY", "기업마당 > 정책정보 > 지원사업 API 에서 인증키 신청");
+  if (!key) throw new MissingKeyError(SOURCE, "BIZINFO_API_KEY", "기업마당 로그인 > 활용정보 > 정책정보 개방 > 지원사업정보 API 사용신청 (https://www.bizinfo.go.kr/apiList.do)");
   const limit = clamp(opts.limit ?? 20, 1, 100);
   const fetchCount = clamp(opts.fetchCount ?? 200, 1, 1000);
   const url = buildUrl(

@@ -14,7 +14,10 @@
    - [창업진흥원_K-Startup 조회서비스 (15125364)](https://www.data.go.kr/data/15125364/openapi.do)
    - [행정안전부_대한민국 공공서비스(혜택) 정보 (15113968)](https://www.data.go.kr/data/15113968/openapi.do) (자동승인)
    - 마이페이지에서 "일반 인증키(Decoding)"를 복사해요. Encoding 키를 넣어도 자동으로 처리돼요.
-2. **기업마당 키 (`BIZINFO_API_KEY`)**: [기업마당 API 안내](https://www.bizinfo.go.kr/web/lay1/program/S1T175C174/apiDetail.do)에서 인증키(crtfcKey)를 신청해요. 공공데이터포털 키와는 다른 별도의 키예요.
+2. **기업마당 키 (`BIZINFO_API_KEY`)**: 공공데이터포털 키와는 다른 별도의 키(crtfcKey)예요.
+   - 기업마당에 회원가입하고 로그인한 뒤 **활용정보 → 정책정보 개방**에서 [지원사업정보 API](https://www.bizinfo.go.kr/apiDetail.do?id=bizinfoApi)의 **사용신청**을 눌러요. ([API 목록](https://www.bizinfo.go.kr/apiList.do))
+   - 신청서에 기관·기업명, 담당자, 연락처, 시스템명, 시스템 IP/URL 등을 적어요. 승인 후 인증키를 받아요. 마이페이지에서 받는다는 자료와 이메일로 받는다는 자료가 있어요 (확실하지 않음).
+   - 키 분실 등 문의: 기업마당 02-867-9765 (공식 상세 페이지에 적혀 있다고 검색 결과에 나옴, 직접 확인 못 함)
 
 키가 없는 소스는 건너뛰고, 나머지 결과만 반환해요.
 
