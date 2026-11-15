@@ -1,4 +1,6 @@
+import Link from "next/link";
 import type { LawArticle, LawDocument, LawHeading } from "@/lib/lawGoKr";
+import type { RuleRef } from "@/lib/taxRules";
 
 const HEADING_CLS = [
   "text-xl font-bold text-gray-900", // 편
@@ -10,7 +12,16 @@ const HEADING_CLS = [
 const LINE_INDENT = ["", "pl-5", "pl-10"];
 
 /** 법령 본문: 왼쪽 목차(장·조), 오른쪽 조문. 조문마다 #a{번호} 앵커가 있다. */
-export default function LawText({ doc }: { doc: LawDocument }) {
+export default function LawText({
+  doc,
+  rulesByArticle,
+  rulesPath,
+}: {
+  doc: LawDocument;
+  /** 법 조문 앵커 → 관련 기본통칙 (법률 페이지에서만) */
+  rulesByArticle?: Record<string, RuleRef[]>;
+  rulesPath?: string;
+}) {
   const articles = doc.items.filter((i): i is LawArticle => i.kind === "article");
   return (
     <div className="lg:grid lg:grid-cols-[16rem_1fr] lg:gap-10">
@@ -29,7 +40,11 @@ export default function LawText({ doc }: { doc: LawDocument }) {
 
       <article className="min-w-0">
         {doc.items.map((item) =>
-          item.kind === "heading" ? <Heading key={item.key} item={item} /> : <Article key={item.key} item={item} />,
+          item.kind === "heading" ? (
+            <Heading key={item.key} item={item} />
+          ) : (
+            <Article key={item.key} item={item} rules={rulesByArticle?.[item.anchor]} rulesPath={rulesPath} />
+          ),
         )}
       </article>
     </div>
@@ -61,7 +76,7 @@ function Heading({ item }: { item: LawHeading }) {
   return <h2 className={`${HEADING_CLS[item.level] ?? HEADING_CLS[1]} mt-10 mb-4 first:mt-0`}>{item.text}</h2>;
 }
 
-function Article({ item }: { item: LawArticle }) {
+function Article({ item, rules, rulesPath }: { item: LawArticle; rules?: RuleRef[]; rulesPath?: string }) {
   if (item.deleted) {
     return (
       <section id={item.anchor} className="scroll-mt-28 py-2 text-sm text-gray-400">
@@ -86,6 +101,21 @@ function Article({ item }: { item: LawArticle }) {
         ))}
       </div>
       {item.note && <p className="mt-2 text-xs text-gray-400">{item.note}</p>}
+      {rules && rules.length > 0 && rulesPath && (
+        <details className="mt-3 rounded-lg bg-blue-50/60 px-3 py-2 text-sm">
+          <summary className="cursor-pointer text-blue-800">관련 기본통칙 {rules.length}개</summary>
+          <ul className="mt-2 space-y-1">
+            {rules.map((r) => (
+              <li key={r.anchor}>
+                <Link href={`${rulesPath}#${r.anchor}`} className="text-gray-700 hover:text-blue-700">
+                  <span className="mr-2 text-blue-700">{r.no}</span>
+                  {r.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </section>
   );
 }

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "individual-consumption-tax",
+    "lawName": "개별소비세법",
+    "year": 2024,
+    "ruleCount": 106
+  },
+  {
+    "id": "national-tax-basic",
+    "lawName": "국세기본법",
+    "year": 2024,
+    "ruleCount": 194
+  },
+  {
+    "id": "corporate-tax",
+    "lawName": "법인세법",
+    "year": 2024,
+    "ruleCount": 519
+  }
+]

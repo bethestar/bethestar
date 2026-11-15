@@ -14,6 +14,8 @@ import {
   type LawLevel,
 } from "@/lib/lawGoKr";
 import LawText from "@/components/law/LawText";
+import TaxRuleText from "@/components/law/TaxRuleText";
+import { getRulesByLawArticle, getTaxRules } from "@/lib/taxRules";
 import AppendixList from "@/components/law/AppendixList";
 import CaseList from "@/components/law/CaseList";
 
@@ -95,6 +97,11 @@ async function SectionContent({
   page: number;
   ids: (typeof TAX_LAW_IDS)[string];
 }) {
+  if (subSection === "general-rules") {
+    // 기본통칙은 국세청 PDF 에서 만든 데이터가 있으면 바로 보여 준다 (API 불필요).
+    const rules = await getTaxRules(lawId);
+    if (rules) return <TaxRuleText doc={rules} lawPath={`/tax/${lawId}/law`} />;
+  }
   if (subSection === "general-rules" || subSection === "execution-standards") {
     return <NtsNotice lawId={lawId} what={subSection === "general-rules" ? "기본통칙" : "집행기준"} lawName={ids.law.name} />;
   }
@@ -105,14 +112,16 @@ async function SectionContent({
 
   // 데이터만 try 안에서 가져오고, 렌더링은 try 밖에서 한다.
   type Loaded =
-    | { kind: "law"; doc: LawDocument }
+    | { kind: "law"; doc: LawDocument; rulesByArticle?: Awaited<ReturnType<typeof getRulesByLawArticle>> }
     | { kind: "appendix"; type: "별표" | "서식"; docs: LawDocument[] }
     | { kind: "cases"; data: Awaited<ReturnType<typeof searchCases>> };
   let loaded: Loaded;
   try {
     const level = LEVEL_BY_SECTION[subSection];
     if (level) {
-      loaded = { kind: "law", doc: await getLawDocument(ids[level].id) };
+      // 법(법률) 조문에는 관련 기본통칙을 함께 표시한다.
+      const rulesByArticle = level === "law" ? await getRulesByLawArticle(lawId) : undefined;
+      loaded = { kind: "law", doc: await getLawDocument(ids[level].id), rulesByArticle };
     } else if (subSection === "appendix" || subSection === "forms") {
       const docs = await Promise.all((["law", "decree", "rule"] as LawLevel[]).map((l) => getLawDocument(ids[l].id)));
       loaded = { kind: "appendix", type: subSection === "appendix" ? "별표" : "서식", docs };
@@ -129,7 +138,7 @@ async function SectionContent({
     return (
       <>
         <LawMeta doc={loaded.doc} />
-        <LawText doc={loaded.doc} />
+        <LawText doc={loaded.doc} rulesByArticle={loaded.rulesByArticle} rulesPath={`/tax/${lawId}/general-rules`} />
       </>
     );
   }
