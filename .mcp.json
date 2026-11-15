@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "gov-support": {
+      "command": "node",
+      "args": ["connectors/gov-support-mcp/src/server.mjs"],
+      "env": {
+        "BIZINFO_API_KEY": "${BIZINFO_API_KEY:-}",
+        "DATA_GO_KR_API_KEY": "${DATA_GO_KR_API_KEY:-}"
+      }
+    }
+  }
+}
