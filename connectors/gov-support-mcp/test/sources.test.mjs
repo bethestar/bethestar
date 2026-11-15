@@ -5,7 +5,7 @@ import { searchKstartup } from "../src/sources/kstartup.mjs";
 import { searchGov24, getGov24Detail } from "../src/sources/gov24.mjs";
 import { searchAll } from "../src/search.mjs";
 import { getJson, redact, encodeServiceKey } from "../src/http.mjs";
-import { splitPeriod, deadlineStatus, matchesRegion } from "../src/normalize.mjs";
+import { splitPeriod, deadlineStatus, matchesRegion, cleanText } from "../src/normalize.mjs";
 
 const KEY = "abc+def/ghi==";
 const ENV = { BIZINFO_API_KEY: "BIZKEY123", DATA_GO_KR_API_KEY: KEY };
@@ -193,6 +193,10 @@ test("http: 허용되지 않은 호스트 차단, 리다이렉트 차단, 오류
   assert.equal(redact(`k=${KEY}`, KEY), "k=***");
   assert.equal(encodeServiceKey("a%2Bb"), "a%2Bb");
   assert.equal(encodeServiceKey("a+b"), "a%2Bb");
+});
+
+test("normalize: HTML 엔티티 해석", () => {
+  assert.equal(cleanText("&apos;신산업&apos; &amp; &#39;A&#39; &#x41; &nbsp;<p>x</p>"), "'신산업' & 'A' A x");
 });
 
 test("normalize: 기간 분리·상태·지역", () => {

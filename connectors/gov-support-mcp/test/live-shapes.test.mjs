@@ -113,3 +113,74 @@ test("보조금24: HTTP 200 + code -4 도 인증 오류로", async () => {
     (err) => err.name === "AuthError",
   );
 });
+
+// 보조금24 serviceList / serviceDetail 실제 응답 형태 (2026-11 확인, 값은 줄임)
+const GOV24_LIST_LIVE = {
+  currentCount: 1,
+  matchCount: 10942,
+  page: 1,
+  perPage: 100,
+  totalCount: 10942,
+  data: [
+    {
+      서비스ID: "105100000001",
+      서비스명: "근로·자녀장려금",
+      서비스목적요약: "소득과 재산이 적은 근로소득자에게 근로장려금을 지급",
+      서비스분야: "주거·자립",
+      사용자구분: "가구",
+      소관기관명: "국세청",
+      부서명: "장려세제과",
+      접수기관: "관할 세무서",
+      지원유형: "현금",
+      신청기한: "○ 정기신청 : 5.1.~5.31.",
+      전화문의: "해당지역 지자체(세무서)/관할 세무서",
+      상세조회URL: "https://plus.gov.kr/portal/benefitV2/benefitTotalSrvcList/benefitSrvcDtl?svcSeq=556551&bnefType=all&svcId=105100000001",
+      등록일시: "20201217142613",
+      수정일시: "20260430093900",
+    },
+  ],
+};
+
+const GOV24_DETAIL_LIVE = {
+  data: [
+    {
+      서비스ID: "105100000001",
+      서비스명: "근로·자녀장려금",
+      서비스목적: "○ 근로장려세제 - 저소득계층의 빈곤 탈출을 지원",
+      소관기관명: "국세청",
+      접수기관명: "관할 세무서",
+      지원유형: "현금",
+      문의처: "국세상담센터 / 126",
+      구비서류: "○ 소득재산 등 증거자료",
+      온라인신청사이트URL: "https://www.hometax.go.kr",
+      법령: "조세특례제한법(제100조의10, 제0항)",
+      수정일시: "20260430093900",
+    },
+  ],
+};
+
+test("보조금24 목록 실제 형태: 상세조회URL·사용자구분·분야", async () => {
+  const calls = [];
+  const f = async (url) => {
+    calls.push(url);
+    return respond(GOV24_LIST_LIVE)();
+  };
+  const r = await searchGov24({ keyword: "장려금" }, { DATA_GO_KR_API_KEY: "k" }, f);
+  assert.equal(r.totalCount, 10942);
+  const i = r.items[0];
+  assert.equal(i.id, "105100000001");
+  assert.equal(i.userType, "가구");
+  assert.equal(i.category, "주거·자립");
+  assert.equal(i.receivingOrg, "관할 세무서");
+  assert.equal(i.registeredAt, "2026-04-30");
+  assert.match(i.url, /^https:\/\/plus\.gov\.kr\/.*svcId=105100000001/);
+});
+
+test("보조금24 상세 실제 형태: 문의처, 안내 페이지 URL(신청 사이트와 분리)", async () => {
+  const { getGov24Detail } = await import("../src/sources/gov24.mjs");
+  const d = await getGov24Detail("105100000001", { DATA_GO_KR_API_KEY: "k" }, respond(GOV24_DETAIL_LIVE));
+  assert.equal(d.contact, "국세상담센터 / 126");
+  assert.equal(d.onlineApplyUrl, "https://www.hometax.go.kr");
+  assert.match(d.url, /^https:\/\/plus\.gov\.kr\/.*svcId=105100000001/);
+  assert.equal(d.documents, "○ 소득재산 등 증거자료");
+});

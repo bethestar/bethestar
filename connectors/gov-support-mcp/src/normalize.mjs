@@ -13,12 +13,12 @@ export function pick(row, ...keys) {
 export function cleanText(text, max = 400) {
   const s = String(text ?? "")
     .replace(/<\/?[A-Za-z][^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
+    .replace(/&(#x[0-9a-f]+|#\d+|nbsp|amp|lt|gt|quot|apos);/gi, (m, e) => {
+      const named = { nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" }[e.toLowerCase()];
+      if (named) return named;
+      const code = e[1].toLowerCase() === "x" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+      return Number.isFinite(code) && code > 0 && code < 0x110000 ? String.fromCodePoint(code) : m;
+    })
     .replace(/\s+/g, " ")
     .trim();
   return s.length > max ? `${s.slice(0, max)}…` : s;

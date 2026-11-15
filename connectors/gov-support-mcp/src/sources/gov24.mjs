@@ -2,8 +2,9 @@
 // https://www.data.go.kr/data/15113968/openapi.do (활용신청 자동승인, data.go.kr 일반 인증키 사용)
 // 중앙부처·지자체·공공기관의 상시 혜택(보조금·바우처·감면 등) 약 1만여 건.
 //
-// ⚠️ cond[필드::LIKE] 서버 필터는 odcloud 계열 API 의 일반 규칙을 따른 것으로, 이 API 에서 모든 필드에
-//    동작하는지는 직접 검증하지 못했다. 결과는 클라이언트에서 한 번 더 거른다.
+// 2026-11 실제 호출로 확인: serviceList·serviceDetail, cond[서비스명::LIKE]·cond[서비스ID::EQ] 동작.
+//    활용신청 전 키는 HTTP 401 + {"code":-4,"msg":"등록되지 않은 인증키 입니다."}.
+//    상세 응답은 목록과 필드가 조금 다르다 (문의처, 서비스목적, 자치법규·행정규칙 / 상세조회URL·사용자구분 없음).
 
 import { AuthError, buildUrl, encodeServiceKey, getJson, MissingKeyError, SourceError } from "../http.mjs";
 import { clamp, cleanText, matchesKeyword, pick, toIsoDate } from "../normalize.mjs";
@@ -31,17 +32,24 @@ export function normalizeGov24(row, { full = false } = {}) {
     content: cleanText(pick(row, "지원내용"), max),
     howToApply: cleanText(pick(row, "신청방법"), max),
     applyPeriodText: cleanText(pick(row, "신청기한"), 200),
-    contact: pick(row, "전화문의", "문의처전화번호"),
+    contact: cleanText(pick(row, "전화문의", "문의처", "문의처전화번호"), 200),
     registeredAt: toIsoDate(pick(row, "수정일시", "등록일시")),
-    url: pick(row, "상세조회URL", "온라인신청사이트URL") || (id ? `https://www.gov.kr/portal/rcvfvrSvc/dtlEx/${encodeURIComponent(id)}` : ""),
+    // 목록 응답에는 상세조회URL(plus.gov.kr)이 있고, 상세 응답에는 없다 (실호출 확인).
+    // 신청 사이트(온라인신청사이트URL)는 혜택 안내 페이지가 아니라서 url 로 쓰지 않는다.
+    url: pick(row, "상세조회URL") || (id ? gov24PageUrl(id) : ""),
     status: "always", // 대부분 상시 신청 — 신청기한(applyPeriodText) 원문을 확인
   };
   if (full) {
     item.documents = cleanText(pick(row, "구비서류"), max);
     item.onlineApplyUrl = pick(row, "온라인신청사이트URL");
-    item.laws = cleanText(pick(row, "법령"), max);
+    item.laws = cleanText([pick(row, "법령"), pick(row, "자치법규"), pick(row, "행정규칙")].filter(Boolean).join(" || "), max);
   }
   return item;
+}
+
+/** 서비스 ID 로 보조금24 혜택 안내 페이지 주소를 만든다 (목록 응답의 상세조회URL 형식에서 svcSeq 를 뺀 형태). */
+export function gov24PageUrl(id) {
+  return `https://plus.gov.kr/portal/benefitV2/benefitTotalSrvcList/benefitSrvcDtl?bnefType=all&svcId=${encodeURIComponent(id)}`;
 }
 
 function getKey(env) {
