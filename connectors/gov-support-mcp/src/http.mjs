@@ -61,10 +61,10 @@ export function buildUrl(base, params = {}, rawPairs = {}) {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * JSON GET. 허용 호스트만, 리다이렉트는 따르지 않음(쿼리의 키 유출 방지).
+ * GET 후 응답 본문을 문자열로 반환. 허용 호스트만, 리다이렉트는 따르지 않음(쿼리의 키 유출 방지).
  * 429/5xx/네트워크 오류는 최대 retries 회 재시도.
  */
-export async function getJson(source, url, { secret, timeoutMs = 15000, retries = 2, fetchImpl = globalThis.fetch } = {}) {
+export async function getText(source, url, { secret, timeoutMs = 15000, retries = 2, fetchImpl = globalThis.fetch, accept = "application/json" } = {}) {
   const host = new URL(url).hostname;
   if (!ALLOWED_HOSTS.has(host)) {
     throw new SourceError(source, `허용되지 않은 호스트: ${host}`);
@@ -77,7 +77,7 @@ export async function getJson(source, url, { secret, timeoutMs = 15000, retries 
       const res = await fetchImpl(url, {
         method: "GET",
         redirect: "manual",
-        headers: { accept: "application/json", "user-agent": "gov-support-mcp/0.1" },
+        headers: { accept, "user-agent": "gov-support-mcp/0.1" },
         signal: ac.signal,
       });
       const body = await res.text();
@@ -98,13 +98,7 @@ export async function getJson(source, url, { secret, timeoutMs = 15000, retries 
       if (!res.ok) {
         throw new SourceError(source, `요청 실패(HTTP ${res.status}): ${redact(body.slice(0, 200), secret)}`, { status: res.status });
       }
-      try {
-        return JSON.parse(body);
-      } catch {
-        // data.go.kr 은 키 오류 시 XML 을 돌려주는 경우가 있다.
-        const msg = body.match(/<(returnAuthMsg|errMsg|resultMsg)>([^<]*)</)?.[2];
-        throw new SourceError(source, `JSON 이 아닌 응답${msg ? `: ${msg}` : ""} — 키 미등록·활용신청 미승인일 수 있습니다.`);
-      }
+      return body;
     } catch (err) {
       if (err instanceof SourceError) throw err;
       lastErr = new SourceError(
@@ -121,4 +115,21 @@ export async function getJson(source, url, { secret, timeoutMs = 15000, retries 
     }
   }
   throw lastErr;
+}
+
+/** XML 오류 응답에서 메시지를 꺼낸다 (data.go.kr 계열). */
+export function xmlErrorMessage(body) {
+  return String(body).match(/<(returnAuthMsg|errMsg|resultMsg|reqErr|message)>\s*(?:<!\[CDATA\[)?([^<\]]*)/)?.[2]?.trim() ?? "";
+}
+
+/** JSON GET. 본문이 JSON 이 아니면 (XML 오류 응답 등) SourceError. */
+export async function getJson(source, url, opts = {}) {
+  const body = await getText(source, url, opts);
+  try {
+    return JSON.parse(body);
+  } catch {
+    // data.go.kr 은 키 오류 시 XML 을 돌려주는 경우가 있다.
+    const msg = xmlErrorMessage(body);
+    throw new SourceError(source, `JSON 이 아닌 응답${msg ? `: ${msg}` : ""} — 키 미등록·활용신청 미승인일 수 있습니다.`);
+  }
 }

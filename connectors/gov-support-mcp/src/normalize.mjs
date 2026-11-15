@@ -12,7 +12,7 @@ export function pick(row, ...keys) {
 /** HTML 태그·엔티티 제거 후 공백 정리, 길이 제한. */
 export function cleanText(text, max = 400) {
   const s = String(text ?? "")
-    .replace(/<[^>]*>/g, " ")
+    .replace(/<\/?[A-Za-z][^>]*>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")

@@ -26,7 +26,7 @@
 ```bash
 cd connectors/gov-support-mcp
 npm install
-npm test          # 가짜 응답으로 하는 단위 테스트 (네트워크 불필요)
+npm test          # 가짜 응답으로 하는 단위 테스트 18개 (네트워크 불필요)
 ```
 
 ## 3. 연결
@@ -92,6 +92,7 @@ node src/cli.mjs gov24-detail 000000465790
   - K-Startup·보조금24: 공개된 제3자 구현([NomaDamas/k-skill](https://github.com/NomaDamas/k-skill), [djfksjd/sole-search](https://github.com/djfksjd/sole-search))을 참고했어요.
   - 기업마당: 공개된 사용 예시를 바탕으로 작성했어요. 공식 명세서와 대조하지 못해서 **특히 불확실해요.**
   - 필드명이 다르면 여러 후보 키를 순서대로 시도하고, 그래도 없으면 응답 키 목록과 함께 오류를 내요.
+- 기업마당은 `dataType=json`을 요청해도 XML만 온다는 보고가 있어요 (공식 페이지는 JSON 지원이라고 설명함). 그래서 JSON을 먼저 읽고, 아니면 XML(RSS)의 `<item>`을 읽어요. 결과의 `format` 필드(`json`/`xml`)로 실제 형식을 확인할 수 있어요. JSON 목록이 어느 키 아래에 있는지 확인되지 않아서 `jsonArray`·`items`·`data` 등 여러 형태를 허용해요.
 - K-Startup의 지역·대상·업력 필터는 서버가 무시하는 사례가 보고되어 있어서 클라이언트에서 한 번 더 걸러요.
 - 보조금24의 `cond[필드::LIKE]` 필터가 모든 필드에서 동작하는지는 확인하지 못했어요.
 - 목록 데이터만으로는 지원 자격을 확정할 수 없어요. 반드시 공식 공고문을 확인해야 해요.
